@@ -2,69 +2,80 @@ import java.sql.*;
 
 public class SimpleAuthService implements AuthService {
     private static Connection connection;
-    private static Statement stmt;
-    private static PreparedStatement psInsert;
-
-//    private class UserData {
-//        String login;
-//        String password;
-//        String nickname;
-//
-//        public UserData(String login, String password, String nickname) {
-//            this.login = login;
-//            this.password = password;
-//            this.nickname = nickname;
-//        }
-//    }
+    private static PreparedStatement psGetNickname;
+    private static PreparedStatement psRegistration;
+    private static PreparedStatement psChangeNick;
 
 
     @Override
     public String getNicknameByLoginAndPassword(String login, String password) {
+        String nick = null;
         try {
-            connect();
-            ResultSet rs = stmt.executeQuery("SELECT nickname FROM users WHERE login = '"+login+
-            "' AND password = '"+password+"';");
-            return rs.getString("nickname");
-        } catch (ClassNotFoundException e) {
+            psGetNickname.setString(1, login);
+            psGetNickname.setString(2, password);
+            ResultSet rs = psGetNickname.executeQuery();
+            if (rs.next()) {
+                nick = rs.getString(1);
+            }
+            rs.close();
+        } catch (SQLException e) {
             e.printStackTrace();
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        } finally {
-            disconnect();
         }
-        return null;
+        return nick;
     }
 
     @Override
     public boolean registration(String login, String password, String nickname) {
         try {
-            psInsert = connection.prepareStatement("INSERT INTO users (login, password, nickname)" +
-                    "VALUES (? , ? , ?);");
-            psInsert.setString(1,login);
-            psInsert.setString(2,password);
-            psInsert.setString(3,nickname);
+            psRegistration.setString(1, login);
+            psRegistration.setString(2, password);
+            psRegistration.setString(3, nickname);
+            psRegistration.executeUpdate();
             return true;
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        } finally {
-            try {
-                psInsert.close();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
-            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
-    public static void connect() throws ClassNotFoundException, SQLException {
-        Class.forName("org.sqlite.JDBC");
-        connection = DriverManager.getConnection("jdbc:sqlite:users.db");
-        stmt = connection.createStatement();
-    }
-
-    private static void disconnect(){
+    @Override
+    public boolean changeNick(String oldNick, String newNick) {
         try {
-            stmt.close();
+            psChangeNick.setString(1, newNick);
+            psChangeNick.setString(2, oldNick);
+            psChangeNick.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public static boolean connect(){
+        try {
+            Class.forName("org.sqlite.JDBC");
+            connection = DriverManager.getConnection("jdbc:sqlite:users.db");
+            prepareAllStatements();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static void prepareAllStatements() throws SQLException {
+        psGetNickname = connection.prepareStatement("SELECT nickname FROM users WHERE login = ? AND password = ?;");
+        psRegistration = connection.prepareStatement("INSERT INTO users(login, password, nickname) VALUES (? ,? ,? );");
+        psChangeNick = connection.prepareStatement("UPDATE users SET nickname = ? WHERE nickname = ?;");
+    }
+
+    public static void disconnect(){
+        try {
+            psGetNickname.close();
+            psChangeNick.close();
+            psRegistration.close();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -74,5 +85,4 @@ public class SimpleAuthService implements AuthService {
             throwables.printStackTrace();
         }
     }
-
 }

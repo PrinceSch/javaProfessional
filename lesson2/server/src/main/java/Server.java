@@ -1,7 +1,6 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -17,6 +16,9 @@ public class Server {
 
     public Server() {
         clients = new Vector<>();
+        if (!SimpleAuthService.connect()) {
+            throw new RuntimeException("Не удалось подключиться к БД");
+        }
         authService = new SimpleAuthService();
 
         try {
@@ -31,6 +33,7 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            SimpleAuthService.disconnect();
             try {
                 server.close();
             } catch (IOException e) {
