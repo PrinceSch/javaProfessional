@@ -20,7 +20,7 @@ public class ClientHandler {
             this.socket = socket;
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
-            socket.setSoTimeout(10000);
+            socket.setSoTimeout(12000);
 
             new Thread(() -> {
                 try {
@@ -78,7 +78,24 @@ public class ClientHandler {
                                 }
                                 server.privateMessage(this, prMsg[1], prMsg[2]);
                             }
-
+                            if (str.startsWith("/chnick ")) {
+                                String[] token = str.split(" ", 2);
+                                if (token.length < 2) {
+                                    continue;
+                                }
+                                if (token[1].contains(" ")) {
+                                    sendMsg("Ник не может содержать пробелов");
+                                    continue;
+                                }
+                                if (server.getAuthService().changeNick(this.nickname, token[1])) {
+                                    sendMsg("/yournickis " + token[1]);
+                                    sendMsg("Ваш ник изменен на " + token[1]);
+                                    this.nickname = token[1];
+                                    server.broadClientList();
+                                } else {
+                                    sendMsg("Не удалось изменить ник. Ник " + token[1] + " уже существует");
+                                }
+                            }
                         } else {
                             server.broadCastMsg(this, str);
                         }
