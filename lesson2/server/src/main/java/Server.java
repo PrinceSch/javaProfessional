@@ -13,6 +13,7 @@ public class Server {
     Socket socket = null;
     List<ClientHandler> clients;
     private AuthService authService;
+    private History chatStory;
 
     public Server() {
         clients = new Vector<>();
@@ -47,6 +48,7 @@ public class Server {
         String message = String.format("%s %s : %s", date.format(new Date()), sender.getNickname(), msg);
         for (ClientHandler client : clients) {
             client.sendMsg(message + "\n");
+            chatStory.writeHistory(client.getLogin(),message);
         }
     }
 
