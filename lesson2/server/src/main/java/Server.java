@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
 
@@ -13,13 +15,15 @@ public class Server {
     Socket socket = null;
     List<ClientHandler> clients;
     private AuthService authService;
-    private History chatStory;
+    private ExecutorService executorService;
+
 
     public Server() {
         clients = new Vector<>();
         if (!SimpleAuthService.connect()) {
             throw new RuntimeException("Не удалось подключиться к БД");
         }
+        executorService = Executors.newFixedThreadPool(2000);
         authService = new SimpleAuthService();
 
         try {
@@ -35,6 +39,7 @@ public class Server {
             e.printStackTrace();
         } finally {
             SimpleAuthService.disconnect();
+            executorService.shutdown();
             try {
                 server.close();
             } catch (IOException e) {
@@ -48,7 +53,6 @@ public class Server {
         String message = String.format("%s %s : %s", date.format(new Date()), sender.getNickname(), msg);
         for (ClientHandler client : clients) {
             client.sendMsg(message + "\n");
-            chatStory.writeHistory(client.getLogin(),message);
         }
     }
 
@@ -98,5 +102,9 @@ public class Server {
         for (ClientHandler c: clients){
             c.sendMsg(msg);
         }
+    }
+
+    public ExecutorService getExecServ(){
+        return executorService;
     }
 }
