@@ -9,7 +9,6 @@ public class ClientHandler {
 
     Server server = null;
     Socket socket = null;
-    History story;
     DataInputStream in;
     DataOutputStream out;
     private String nickname;
@@ -24,7 +23,7 @@ public class ClientHandler {
             out = new DataOutputStream(socket.getOutputStream());
             socket.setSoTimeout(12000);
 
-            new Thread(() -> {
+            server.getExecServ().execute(() -> {
                 try {
                     // цикл аутентификации
                     while (true) {
@@ -41,7 +40,6 @@ public class ClientHandler {
                                     nickname = newNick;
                                     sendMsg("/authok " + nickname);
                                     server.subscribe(this);
-                                    loadHistory(login);
                                     break;
                                 }else{
                                     sendMsg("This user logged already");
@@ -115,7 +113,7 @@ public class ClientHandler {
                         e.printStackTrace();
                     }
                 }
-            }).start();
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -135,20 +133,6 @@ public class ClientHandler {
 
     public String getLogin() {
         return login;
-    }
-
-    private void loadHistory(String login){
-        List<String> historyList = story.readHistory(login);
-        int count = 100;
-        if (historyList.size() > count){
-            for (int i = historyList.size() - count; i < historyList.size(); i++) {
-                sendMsg(historyList.get(i));
-            }
-        } else {
-            for (int i = 0; i < historyList.size() ; i++) {
-                sendMsg(historyList.get(i));
-            }
-        }
     }
 
 }

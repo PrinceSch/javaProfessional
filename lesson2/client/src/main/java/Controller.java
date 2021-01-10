@@ -48,6 +48,7 @@ public class Controller implements Initializable {
 
     private boolean authenticated;
     private String nickname;
+    private String login;
     private final String TITLE = "GeekChat";
 
     private Stage stage;
@@ -65,6 +66,7 @@ public class Controller implements Initializable {
 
         if (!authenticated) {
             nickname = "";
+            History.stop();
         }
         textArea.clear();
         setTitle(nickname);
@@ -107,6 +109,8 @@ public class Controller implements Initializable {
                             if (str.startsWith("/authok")) {
                                 nickname = str.split("\\s", 2)[1];
                                 setAuthenticated(true);
+                                textArea.appendText(History.getLast100LinesOfHistory(login));
+                                History.start(login);
                                 break;
                             }
                             if(str.startsWith("/regok")){
@@ -142,6 +146,7 @@ public class Controller implements Initializable {
 
                             } else {
                                 textArea.appendText(str + "\n");
+                                History.writeLine(str);
                             }
                         }
                     } catch (IOException e) {
@@ -179,6 +184,7 @@ public class Controller implements Initializable {
         try {
             out.writeUTF(String.format("/auth %s %s", loginField.getText().trim().toLowerCase(),
                     passwordField.getText().trim()));
+            login = loginField.getText();
             passwordField.clear();
             loginField.clear();
         } catch (IOException e) {
