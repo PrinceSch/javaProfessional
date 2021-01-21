@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class ClientHandler {
 
@@ -13,7 +14,7 @@ public class ClientHandler {
     DataOutputStream out;
     private String nickname;
     private String login;
-
+    private static final Logger log = Logger.getLogger(Server.class.getName());
 
     public ClientHandler(Server server, Socket socket) {
         try {
@@ -28,6 +29,7 @@ public class ClientHandler {
                     // цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
+                        log.info(str);
 
                         if (str.startsWith("/auth")) {
                             String[] token = str.split("\\s");
@@ -66,6 +68,7 @@ public class ClientHandler {
                     // цикл работы
                     while (true) {
                         String str = in.readUTF();
+                        log.info(str);
 
                         if(str.startsWith("/")){
                             if (str.equals("/end")) {

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 
 public class Server {
 
@@ -16,23 +17,25 @@ public class Server {
     List<ClientHandler> clients;
     private AuthService authService;
     private ExecutorService executorService;
+    private static final Logger log = Logger.getLogger(Server.class.getName());
 
 
     public Server() {
         clients = new Vector<>();
         if (!SimpleAuthService.connect()) {
-            throw new RuntimeException("Не удалось подключиться к БД");
+            log.severe("Could not connect to database");
+            throw new RuntimeException("Could not connect to database");
         }
         executorService = Executors.newFixedThreadPool(2000);
         authService = new SimpleAuthService();
 
         try {
             server = new ServerSocket(PORT);
-            System.out.println("Server launched");
+            log.info("Server launched");
 
             while (true) {
                 socket = server.accept();
-                System.out.println("User connected");
+                log.info("User connected" + socket.getRemoteSocketAddress());
                 new ClientHandler(this, socket);
             }
         } catch (IOException e) {
